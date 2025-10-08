@@ -53,25 +53,28 @@ function showSubtopics(topic) {
 // Show MCQs for a subtopic
 function showMCQs(subtopic) {
   let score = 0;
+  let answered = 0;
+  const total = subtopic.mcqs.length;
+
   contentDiv.innerHTML = `<h2>${subtopic.name} → MCQs</h2>`;
 
-  // Score display
   const scoreDisplay = document.createElement("div");
   scoreDisplay.style.margin = "15px 0";
   scoreDisplay.style.fontWeight = "bold";
-  scoreDisplay.textContent = `Score: 0 / ${subtopic.mcqs.length}`;
+  scoreDisplay.textContent = `Score: 0 / ${total}`;
   contentDiv.appendChild(scoreDisplay);
 
   subtopic.mcqs.forEach((qObj, i) => {
     const div = document.createElement("div");
     div.className = "mcq-container";
+    div.style.border = "1px solid #ccc";
+    div.style.padding = "10px";
+    div.style.marginBottom = "10px";
 
-    // QUESTION
     const questionHTML = document.createElement("div");
     questionHTML.innerHTML = `<strong>Q${i + 1}: ${qObj.q}</strong>`;
     div.appendChild(questionHTML);
 
-    // OPTIONS
     qObj.options.forEach((opt, index) => {
       const btn = document.createElement("button");
       btn.textContent = opt;
@@ -89,7 +92,14 @@ function showMCQs(subtopic) {
 
         // Disable all options
         Array.from(div.querySelectorAll("button")).forEach(b => b.disabled = true);
-        scoreDisplay.textContent = `Score: ${score} / ${subtopic.mcqs.length}`;
+
+        answered++;
+        scoreDisplay.textContent = `Score: ${score} / ${total}`;
+
+        // If all questions answered, show final summary
+        if (answered === total) {
+          showFinalSummary(subtopic.name, score, total);
+        }
       };
 
       div.appendChild(btn);
@@ -98,13 +108,32 @@ function showMCQs(subtopic) {
     contentDiv.appendChild(div);
   });
 
-  // Back button
+  // Back button to subtopics
   const backBtn = document.createElement("button");
   backBtn.textContent = "← Back to Subtopics";
   backBtn.style.marginTop = "20px";
   backBtn.onclick = () => showSubtopics(findTopicForSub(subtopic));
   contentDiv.appendChild(backBtn);
 }
+
+// Final summary function
+function showFinalSummary(subtopicName, score, total) {
+  contentDiv.innerHTML = `
+    <h2>${subtopicName} — Result</h2>
+    <p style="font-size:18px; font-weight:bold;">You scored ${score} / ${total}</p>
+  `;
+
+  const backBtn = document.createElement("button");
+  backBtn.textContent = "← Back to Subtopics";
+  backBtn.onclick = () => {
+    const subtopic = allData
+      .flatMap(t => t.subtopics)
+      .find(s => s.name === subtopicName);
+    showSubtopics(findTopicForSub(subtopic));
+  };
+  contentDiv.appendChild(backBtn);
+}
+
 
 // Helper: find parent topic for subtopic
 function findTopicForSub(sub) {
