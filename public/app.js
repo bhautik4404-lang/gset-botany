@@ -1,10 +1,17 @@
 const contentDiv = document.getElementById("content");
 
 async function loadData() {
-  const res = await fetch("https://raw.githubusercontent.com/bhautik4404-lang/gset-botany/main/data.json?" + Date.now());
-  const data = await res.json();
-  allData = data;
-  showTopics(data);
+  try {
+    const res = await fetch(
+      "https://raw.githubusercontent.com/bhautik4404-lang/gset-botany/main/data.json?" + Date.now()
+    );
+    if (!res.ok) throw new Error("Failed to fetch data.json");
+    allData = await res.json();
+    showTopics(allData);
+  } catch (err) {
+    contentDiv.innerHTML = `<p style="color:red;">Error loading questions: ${err.message}</p>`;
+    console.error(err);
+  }
 }
 
 // Show all topics
@@ -39,16 +46,20 @@ function showSubtopics(topic) {
   contentDiv.appendChild(backBtn);
 }
 
-// Show MCQs with interactive answers and score
+// Show MCQs with interactive answers + score
 function showMCQs(subtopic) {
-  let score = 0; // Initialize score
+  let score = 0;
   contentDiv.innerHTML = `<h2>${subtopic.subtopic} → MCQs</h2>`;
+
+  const scoreDisplay = document.createElement("div");
+  scoreDisplay.style.margin = "15px 0";
+  scoreDisplay.style.fontWeight = "bold";
+  scoreDisplay.textContent = `Score: 0 / ${subtopic.mcqs.length}`;
+  contentDiv.appendChild(scoreDisplay);
 
   subtopic.mcqs.forEach((q, i) => {
     const div = document.createElement("div");
-    div.style.border = "1px solid #ccc";
-    div.style.padding = "10px";
-    div.style.marginBottom = "10px";
+    div.className = "mcq-container";
 
     const questionHTML = document.createElement("div");
     questionHTML.innerHTML = `<strong>Q${i + 1}: ${q.question}</strong>`;
@@ -60,18 +71,15 @@ function showMCQs(subtopic) {
       optBtn.style.margin = "5px";
       optBtn.onclick = () => {
         if (opt === q.answer) {
-          optBtn.style.backgroundColor = "#2ecc71"; // green for correct
+          optBtn.style.backgroundColor = "#2ecc71";
           optBtn.style.color = "white";
-          score++; // increment score
+          score++;
         } else {
-          optBtn.style.backgroundColor = "#e74c3c"; // red for wrong
+          optBtn.style.backgroundColor = "#e74c3c";
           optBtn.style.color = "white";
         }
 
-        // Disable all buttons after selection
         Array.from(div.querySelectorAll("button")).forEach(b => b.disabled = true);
-
-        // Update score display
         scoreDisplay.textContent = `Score: ${score} / ${subtopic.mcqs.length}`;
       };
       div.appendChild(optBtn);
@@ -80,14 +88,6 @@ function showMCQs(subtopic) {
     contentDiv.appendChild(div);
   });
 
-  // Display score at top
-  const scoreDisplay = document.createElement("div");
-  scoreDisplay.style.margin = "15px 0";
-  scoreDisplay.style.fontWeight = "bold";
-  scoreDisplay.textContent = `Score: 0 / ${subtopic.mcqs.length}`;
-  contentDiv.prepend(scoreDisplay);
-
-  // Back button
   const backBtn = document.createElement("button");
   backBtn.textContent = "← Back to Subtopics";
   backBtn.onclick = () => showSubtopics(findTopicForSub(subtopic));
@@ -95,7 +95,7 @@ function showMCQs(subtopic) {
   contentDiv.appendChild(backBtn);
 }
 
-// Helper to find parent topic for a subtopic
+// Helper to find parent topic
 function findTopicForSub(sub) {
   return allData.find(topic => topic.subtopics.includes(sub));
 }
