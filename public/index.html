@@ -5,27 +5,49 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GSET Botany — Live MCQs</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    h1, h2 { color: #2c3e50; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f9f9f9;
+      color: #2c3e50;
+    }
+
+    h2 {
+      color: #34495e;
+    }
+
     button {
-      padding: 8px 15px;
-      font-size: 15px;
-      border-radius: 5px;
-      border: none;
       cursor: pointer;
+      padding: 8px 12px;
+      border: 1px solid #3498db;
+      background-color: white;
+      color: #3498db;
+      border-radius: 4px;
+      transition: 0.2s;
+    }
+
+    button:hover {
       background-color: #3498db;
       color: white;
     }
-    button:hover:not(:disabled) { background-color: #2980b9; }
-    button:disabled { opacity: 0.6; cursor: not-allowed; }
-    .mcq-container { border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; }
+
+    input[type="text"] {
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    .mcq-container {
+      background-color: white;
+      border-radius: 5px;
+    }
   </style>
 </head>
 <body>
-
   <h1>GSET Botany — Live MCQs</h1>
-  <div id="content">Connecting… Loading questions…</div>
+  <div id="content">Loading questions…</div>
 
-  <script src="app.js" defer></script>
+  <!-- Include app.js -->
+  <script src="public/app.js"></script>
 </body>
 </html>
