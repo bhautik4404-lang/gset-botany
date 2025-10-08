@@ -32,7 +32,7 @@ function showTopics(data) {
   contentDiv.innerHTML = "<h2>Select a Topic</h2>";
   data.forEach(topic => {
     const btn = document.createElement("button");
-    btn.textContent = topic.name; // JSON key "name"
+    btn.textContent = topic.name;
     btn.style.display = "block";
     btn.style.margin = "10px 0";
     btn.onclick = () => showSubtopics(topic);
@@ -45,7 +45,7 @@ function showSubtopics(topic) {
   contentDiv.innerHTML = `<h2>${topic.name} → Select Subtopic</h2>`;
   topic.subtopics.forEach(sub => {
     const btn = document.createElement("button");
-    btn.textContent = sub.name; // JSON key "name"
+    btn.textContent = sub.name;
     btn.style.display = "block";
     btn.style.margin = "10px 0";
     btn.onclick = () => showMCQs(sub);
@@ -65,7 +65,7 @@ function showMCQs(subtopic) {
   let answered = 0;
   const total = subtopic.mcqs.length;
 
-  // **Shuffle answers for all MCQs first**
+  // Shuffle answers for all MCQs first
   subtopic.mcqs.forEach(qObj => {
     const correctAnswerText = qObj.options[qObj.answer];
     qObj.options = shuffleArray([...qObj.options]);
@@ -88,16 +88,19 @@ function showMCQs(subtopic) {
     div.style.padding = "10px";
     div.style.marginBottom = "10px";
 
+    // QUESTION
     const questionHTML = document.createElement("div");
     questionHTML.innerHTML = `<strong>Q${i + 1}: ${qObj.q}</strong>`;
     div.appendChild(questionHTML);
 
+    // OPTIONS
     qObj.options.forEach((opt, index) => {
       const btn = document.createElement("button");
       btn.textContent = opt;
       btn.style.margin = "5px";
 
       btn.onclick = () => {
+        // Mark correct/incorrect
         if (index === qObj.answer) {
           btn.style.backgroundColor = "#2ecc71"; // green
           btn.style.color = "white";
@@ -109,6 +112,14 @@ function showMCQs(subtopic) {
 
         // Disable all options
         Array.from(div.querySelectorAll("button")).forEach(b => b.disabled = true);
+
+        // Show explanation
+        const explanationDiv = document.createElement("div");
+        explanationDiv.style.marginTop = "5px";
+        explanationDiv.style.fontStyle = "italic";
+        explanationDiv.style.color = "#34495e";
+        explanationDiv.textContent = "Explanation: " + qObj.explanation;
+        div.appendChild(explanationDiv);
 
         answered++;
         scoreDisplay.textContent = `Score: ${score} / ${total}`;
