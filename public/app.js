@@ -1,64 +1,67 @@
-const paperSelect = document.getElementById("paper-select");
-const searchInput = document.getElementById("search");
-const container = document.getElementById("mcq-container");
+let currentData = null;
 
-let mcqs = [];
-let currentPaper = "paper2";
-
-async function loadMCQs(paper) {
-  const res = await fetch(`/api/${paper}`);
-  mcqs = await res.json();
-  displayMCQs(mcqs);
+async function loadPaper(paper) {
+  try {
+    const res = await fetch(`/api/${paper}`);
+    const data = await res.json();
+    currentData = data;
+    renderTopics(data.topics);
+  } catch (e) {
+    document.getElementById("content").textContent = "Error loading data: " + e.message;
+  }
 }
 
-function displayMCQs(data) {
+function renderTopics(topics) {
+  const container = document.getElementById("content");
   container.innerHTML = "";
-  data.forEach((q, i) => {
-    const qDiv = document.createElement("div");
-    qDiv.classList.add("question");
-    
-    let options = shuffleOptions(q.options, q.answer);
+  topics.forEach(topic => {
+    const btn = document.createElement("button");
+    btn.textContent = topic.name;
+    btn.onclick = () => renderSubtopics(topic.subtopics);
+    container.appendChild(btn);
+  });
+}
 
-    qDiv.innerHTML = `
-      <p><b>${i+1}. ${q.question}</b></p>
-      ${options.map((opt, idx) => `<button onclick="checkAnswer('${opt}', '${q.answer}', '${q.explanation}', this)">${opt}</button>`).join("")}
-      <p class="explanation" style="display:none;"></p>
-    `;
+function renderSubtopics(subtopics) {
+  const container = document.getElementById("content");
+  container.innerHTML = "";
+  subtopics.forEach(sub => {
+    const btn = document.createElement("button");
+    btn.textContent = sub.name;
+    btn.onclick = () => renderMCQs(sub.mcqs);
+    container.appendChild(btn);
+  });
+}
+
+function renderMCQs(mcqs) {
+  const container = document.getElementById("content");
+  container.innerHTML = "";
+
+  mcqs.forEach(mcq => {
+    const qDiv = document.createElement("div");
+    qDiv.classList.add("mcq");
+
+    const qText = document.createElement("p");
+    qText.textContent = mcq.q;
+    qDiv.appendChild(qText);
+
+    // Shuffle options
+    const shuffled = mcq.options
+      .map((opt, i) => ({ opt, index: i }))
+      .sort(() => Math.random() - 0.5);
+
+    shuffled.forEach(({ opt, index }) => {
+      const btn = document.createElement("button");
+      btn.textContent = opt;
+      btn.onclick = () => {
+        btn.style.backgroundColor = index === mcq.answer ? "green" : "red";
+      };
+      qDiv.appendChild(btn);
+    });
+
     container.appendChild(qDiv);
   });
 }
 
-function shuffleOptions(options, answer) {
-  let opts = [...options];
-  for (let i = opts.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [opts[i], opts[j]] = [opts[j], opts[i]];
-  }
-  return opts;
-}
-
-function checkAnswer(selected, correct, explanation, btn) {
-  const parent = btn.parentElement;
-  const exp = parent.querySelector(".explanation");
-  if (selected === correct) {
-    btn.style.backgroundColor = "green";
-  } else {
-    btn.style.backgroundColor = "red";
-  }
-  exp.style.display = "block";
-  exp.textContent = "Explanation: " + explanation;
-}
-
-// Event listeners
-paperSelect.addEventListener("change", () => {
-  currentPaper = paperSelect.value;
-  loadMCQs(currentPaper);
-});
-
-searchInput.addEventListener("input", () => {
-  const filtered = mcqs.filter(q => q.question.toLowerCase().includes(searchInput.value.toLowerCase()));
-  displayMCQs(filtered);
-});
-
-// Initial load
-loadMCQs(currentPaper);
+document.getElementById("paper1Btn").onclick = () => loadPaper("paper1");
+document.getElementById("paper2Btn").onclick = () => loadPaper("paper2");

@@ -1,25 +1,30 @@
 const express = require("express");
 const path = require("path");
-const cors = require("cors");
-const app = express();
+const fs = require("fs");
 
+const app = express();
 const PORT = process.env.PORT || 10000;
 
-app.use(cors());
-app.use(express.json());
+// Serve static files
 app.use(express.static(path.join(__dirname, "public")));
 
-// API for Paper 1
-app.get("/api/paper1", (req, res) => {
-  res.sendFile(path.join(__dirname, "data1.json"));
+// API endpoint for Paper data
+app.get("/api/:paper", (req, res) => {
+  const paper = req.params.paper; // paper1 or paper2
+  const filePath = path.join(__dirname, `${paper}.json`);
+
+  fs.readFile(filePath, "utf-8", (err, data) => {
+    if (err) return res.status(404).json({ error: "Paper not found" });
+
+    try {
+      res.json(JSON.parse(data));
+    } catch (e) {
+      res.status(500).json({ error: "Invalid JSON format" });
+    }
+  });
 });
 
-// API for Paper 2
-app.get("/api/paper2", (req, res) => {
-  res.sendFile(path.join(__dirname, "data.json"));
-});
-
-// SPA wildcard route for React/Vanilla JS routing
+// SPA support
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "public/index.html"));
 });
