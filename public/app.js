@@ -59,16 +59,24 @@ function showSubtopics(topic) {
   contentDiv.appendChild(backBtn);
 }
 
-// Show MCQs for a subtopic with tag filtering and search
+// Show MCQs for a subtopic with tags, search, and progress saving
 function showMCQs(subtopic) {
   let score = 0;
   let answered = 0;
 
+  // Load progress from localStorage
+  const savedProgress = JSON.parse(localStorage.getItem(subtopic.id)) || {};
+
   // Shuffle answers for all MCQs
-  subtopic.mcqs.forEach(qObj => {
+  subtopic.mcqs.forEach((qObj, i) => {
     const correctAnswerText = qObj.options[qObj.answer];
     qObj.options = shuffleArray([...qObj.options]);
     qObj.answer = qObj.options.indexOf(correctAnswerText);
+
+    // Restore previous answer if exists
+    if (savedProgress[i] !== undefined) {
+      qObj.selected = savedProgress[i];
+    }
   });
 
   contentDiv.innerHTML = `<h2>${subtopic.name} → MCQs</h2>`;
@@ -77,7 +85,7 @@ function showMCQs(subtopic) {
   const scoreDisplay = document.createElement("div");
   scoreDisplay.style.margin = "15px 0";
   scoreDisplay.style.fontWeight = "bold";
-  scoreDisplay.textContent = `Score: 0 / ${subtopic.mcqs.length}`;
+  scoreDisplay.textContent = `Score: ${Object.values(savedProgress).filter((sel, idx) => sel === subtopic.mcqs[idx]?.answer).length} / ${subtopic.mcqs.length}`;
   contentDiv.appendChild(scoreDisplay);
 
   // SEARCH BAR
@@ -89,7 +97,7 @@ function showMCQs(subtopic) {
   searchInput.style.padding = "5px";
   contentDiv.appendChild(searchInput);
 
-  // Tag buttons
+  // TAG BUTTONS
   const tagDiv = document.createElement("div");
   tagDiv.style.marginBottom = "10px";
   const allTags = Array.from(new Set(subtopic.mcqs.flatMap(q => q.tags || [])));
@@ -116,7 +124,7 @@ function showMCQs(subtopic) {
   // Initial display: all MCQs
   displayMCQs(subtopic.mcqs);
 
-  // Listen to search input
+  // Search input listener
   searchInput.addEventListener("input", () => {
     const keyword = searchInput.value.toLowerCase();
     const filtered = subtopic.mcqs.filter(q => q.q.toLowerCase().includes(keyword));
@@ -124,7 +132,6 @@ function showMCQs(subtopic) {
   });
 
   function displayMCQs(mcqsToShow) {
-    // Remove existing MCQs
     const existingMCQs = contentDiv.querySelectorAll(".mcq-container");
     existingMCQs.forEach(e => e.remove());
 
@@ -135,24 +142,37 @@ function showMCQs(subtopic) {
       div.style.padding = "10px";
       div.style.marginBottom = "10px";
 
-      // QUESTION
       const questionHTML = document.createElement("div");
       questionHTML.innerHTML = `<strong>Q${i + 1}: ${qObj.q}</strong>`;
       div.appendChild(questionHTML);
 
-      // OPTIONS
       qObj.options.forEach((opt, index) => {
         const btn = document.createElement("button");
         btn.textContent = opt;
         btn.style.margin = "5px";
 
+        // Restore previous answer colors if answered
+        if (qObj.selected !== undefined) {
+          btn.disabled = true;
+          if (index === qObj.selected) {
+            btn.style.backgroundColor = index === qObj.answer ? "#2ecc71" : "#e74c3c";
+            btn.style.color = "white";
+          }
+        }
+
         btn.onclick = () => {
+          qObj.selected = index;
+          // Save progress
+          const progress = JSON.parse(localStorage.getItem(subtopic.id)) || {};
+          progress[i] = index;
+          localStorage.setItem(subtopic.id, JSON.stringify(progress));
+
           if (index === qObj.answer) {
-            btn.style.backgroundColor = "#2ecc71"; // green
+            btn.style.backgroundColor = "#2ecc71";
             btn.style.color = "white";
             score++;
           } else {
-            btn.style.backgroundColor = "#e74c3c"; // red
+            btn.style.backgroundColor = "#e74c3c";
             btn.style.color = "white";
           }
 
@@ -167,7 +187,7 @@ function showMCQs(subtopic) {
           div.appendChild(explanationDiv);
 
           answered++;
-          scoreDisplay.textContent = `Score: ${score} / ${subtopic.mcqs.length}`;
+          scoreDisplay.textContent = `Score: ${Object.values(JSON.parse(localStorage.getItem(subtopic.id))).filter((sel, idx) => sel === subtopic.mcqs[idx]?.answer).length} / ${subtopic.mcqs.length}`;
 
           if (answered === subtopic.mcqs.length) {
             showFinalSummary(subtopic.name, score, subtopic.mcqs.length);
@@ -181,7 +201,6 @@ function showMCQs(subtopic) {
     });
   }
 
-  // Back button
   const backBtn = document.createElement("button");
   backBtn.textContent = "← Back to Subtopics";
   backBtn.style.marginTop = "20px";
@@ -189,7 +208,7 @@ function showMCQs(subtopic) {
   contentDiv.appendChild(backBtn);
 }
 
-// Final summary function
+// Final summary
 function showFinalSummary(subtopicName, score, total) {
   contentDiv.innerHTML = `
     <h2>${subtopicName} — Result</h2>
@@ -207,7 +226,7 @@ function showFinalSummary(subtopicName, score, total) {
   contentDiv.appendChild(backBtn);
 }
 
-// Helper: find parent topic of subtopic
+// Find parent topic
 function findTopicForSub(sub) {
   return allData.find(topic => topic.subtopics.includes(sub));
 }
