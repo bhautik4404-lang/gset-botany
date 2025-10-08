@@ -1,46 +1,31 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GSET Botany — Live MCQs</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
-    body { font-family: system-ui, Arial; margin: 12px; max-width: 900px; }
-    header { display:flex; align-items:center; justify-content:space-between; }
-    .topic { margin: 10px 0; padding: 8px; border: 1px solid #eee; border-radius:8px; }
-    .subtopic { padding:6px; margin:6px 0; border-radius:6px; background:#fafafa; }
-    .mcq { padding:6px; margin:6px 0; }
-    #status { font-size:0.9rem; color:#666; }
-    ul { margin-top:6px; }
-    li { margin-bottom:4px; }
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    h1, h2 { color: #2c3e50; }
     button {
-  padding: 8px 15px;
-  font-size: 15px;
-  border-radius: 5px;
-  border: none;
-  cursor: pointer;
-  background-color: #3498db;
-  color: white;
-}
-button:hover:not(:disabled) {
-  background-color: #2980b9;
-}
-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
+      padding: 8px 15px;
+      font-size: 15px;
+      border-radius: 5px;
+      border: none;
+      cursor: pointer;
+      background-color: #3498db;
+      color: white;
+    }
+    button:hover:not(:disabled) { background-color: #2980b9; }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    .mcq-container { border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; }
   </style>
 </head>
 <body>
-  <header>
-    <h1>GSET Botany — Live MCQs</h1>
-    <div id="status">Connecting...</div>
-  </header>
 
-  <main id="app">
-    <p>Loading questions…</p>
-  </main>
+  <h1>GSET Botany — Live MCQs</h1>
+  <div id="content">Connecting… Loading questions…</div>
 
-  <script src="app.js"></script>
+  <script src="app.js" defer></script>
 </body>
 </html>
