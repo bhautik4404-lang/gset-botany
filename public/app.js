@@ -39,8 +39,9 @@ function showSubtopics(topic) {
   contentDiv.appendChild(backBtn);
 }
 
-// Show MCQs with interactive answers
+// Show MCQs with interactive answers and score
 function showMCQs(subtopic) {
+  let score = 0; // Initialize score
   contentDiv.innerHTML = `<h2>${subtopic.subtopic} → MCQs</h2>`;
 
   subtopic.mcqs.forEach((q, i) => {
@@ -61,6 +62,7 @@ function showMCQs(subtopic) {
         if (opt === q.answer) {
           optBtn.style.backgroundColor = "#2ecc71"; // green for correct
           optBtn.style.color = "white";
+          score++; // increment score
         } else {
           optBtn.style.backgroundColor = "#e74c3c"; // red for wrong
           optBtn.style.color = "white";
@@ -68,6 +70,9 @@ function showMCQs(subtopic) {
 
         // Disable all buttons after selection
         Array.from(div.querySelectorAll("button")).forEach(b => b.disabled = true);
+
+        // Update score display
+        scoreDisplay.textContent = `Score: ${score} / ${subtopic.mcqs.length}`;
       };
       div.appendChild(optBtn);
     });
@@ -75,6 +80,14 @@ function showMCQs(subtopic) {
     contentDiv.appendChild(div);
   });
 
+  // Display score at top
+  const scoreDisplay = document.createElement("div");
+  scoreDisplay.style.margin = "15px 0";
+  scoreDisplay.style.fontWeight = "bold";
+  scoreDisplay.textContent = `Score: 0 / ${subtopic.mcqs.length}`;
+  contentDiv.prepend(scoreDisplay);
+
+  // Back button
   const backBtn = document.createElement("button");
   backBtn.textContent = "← Back to Subtopics";
   backBtn.onclick = () => showSubtopics(findTopicForSub(subtopic));
