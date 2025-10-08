@@ -16,8 +16,8 @@
                             "q": "Which type of bond stabilizes the alpha helix structure of a protein?",
                             "options": [
                                 "good",
-                                "B",
-                                "C",
+                                "Bad",
+                                "Cat",
                                 "D"
                             ],
                             "answer": 0,
