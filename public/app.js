@@ -1,96 +1,64 @@
-const paperSelect = document.getElementById("paperSelect");
-const searchInput = document.getElementById("searchInput");
-const topicContainer = document.getElementById("topicContainer");
-const subtopicContainer = document.getElementById("subtopicContainer");
-const mcqContainer = document.getElementById("mcqContainer");
-const status = document.getElementById("status");
+const paperSelect = document.getElementById("paper-select");
+const searchInput = document.getElementById("search");
+const container = document.getElementById("mcq-container");
 
-let currentData = null;
-let filteredTopics = [];
+let mcqs = [];
+let currentPaper = "paper2";
 
-// Load JSON data for selected paper
-async function loadData(paper) {
-  try {
-    status.innerText = "Loading questions…";
-    const res = await fetch(`/api/${paper}`);
-    if (!res.ok) throw new Error("Failed to fetch data");
-    currentData = await res.json();
-    filteredTopics = currentData.topics;
-    showTopics();
-    status.innerText = "";
-  } catch (e) {
-    status.innerText = "Error loading questions: " + e.message;
-  }
+async function loadMCQs(paper) {
+  const res = await fetch(`/api/${paper}`);
+  mcqs = await res.json();
+  displayMCQs(mcqs);
 }
 
-// Show topics
-function showTopics() {
-  topicContainer.innerHTML = "";
-  subtopicContainer.innerHTML = "";
-  mcqContainer.innerHTML = "";
-
-  filteredTopics.forEach(topic => {
-    const btn = document.createElement("button");
-    btn.innerText = topic.name;
-    btn.onclick = () => showSubtopics(topic);
-    topicContainer.appendChild(btn);
-  });
-}
-
-// Show subtopics
-function showSubtopics(topic) {
-  subtopicContainer.innerHTML = "";
-  mcqContainer.innerHTML = "";
-
-  topic.subtopics.forEach(sub => {
-    const btn = document.createElement("button");
-    btn.innerText = sub.name;
-    btn.onclick = () => showMCQs(sub);
-    subtopicContainer.appendChild(btn);
-  });
-}
-
-// Show MCQs
-function showMCQs(subtopic) {
-  mcqContainer.innerHTML = "";
-
-  subtopic.mcqs.forEach((mcq, idx) => {
+function displayMCQs(data) {
+  container.innerHTML = "";
+  data.forEach((q, i) => {
     const qDiv = document.createElement("div");
-    qDiv.className = "mcq";
+    qDiv.classList.add("question");
+    
+    let options = shuffleOptions(q.options, q.answer);
 
-    const question = document.createElement("p");
-    question.innerText = `${idx + 1}. ${mcq.q}`;
-    qDiv.appendChild(question);
-
-    mcq.options.forEach((opt, i) => {
-      const btn = document.createElement("button");
-      btn.innerText = opt;
-      btn.onclick = () => {
-        alert(
-          i === mcq.answer
-            ? "Correct!\n" + mcq.explanation
-            : "Wrong!\n" + mcq.explanation
-        );
-      };
-      qDiv.appendChild(btn);
-    });
-
-    mcqContainer.appendChild(qDiv);
+    qDiv.innerHTML = `
+      <p><b>${i+1}. ${q.question}</b></p>
+      ${options.map((opt, idx) => `<button onclick="checkAnswer('${opt}', '${q.answer}', '${q.explanation}', this)">${opt}</button>`).join("")}
+      <p class="explanation" style="display:none;"></p>
+    `;
+    container.appendChild(qDiv);
   });
 }
 
-// Search topics/subtopics
-searchInput.addEventListener("input", () => {
-  const term = searchInput.value.toLowerCase();
-  filteredTopics = currentData.topics.filter(topic =>
-    topic.name.toLowerCase().includes(term) ||
-    topic.subtopics.some(sub => sub.name.toLowerCase().includes(term))
-  );
-  showTopics();
+function shuffleOptions(options, answer) {
+  let opts = [...options];
+  for (let i = opts.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [opts[i], opts[j]] = [opts[j], opts[i]];
+  }
+  return opts;
+}
+
+function checkAnswer(selected, correct, explanation, btn) {
+  const parent = btn.parentElement;
+  const exp = parent.querySelector(".explanation");
+  if (selected === correct) {
+    btn.style.backgroundColor = "green";
+  } else {
+    btn.style.backgroundColor = "red";
+  }
+  exp.style.display = "block";
+  exp.textContent = "Explanation: " + explanation;
+}
+
+// Event listeners
+paperSelect.addEventListener("change", () => {
+  currentPaper = paperSelect.value;
+  loadMCQs(currentPaper);
 });
 
-// Paper selection
-paperSelect.addEventListener("change", e => loadData(e.target.value));
+searchInput.addEventListener("input", () => {
+  const filtered = mcqs.filter(q => q.question.toLowerCase().includes(searchInput.value.toLowerCase()));
+  displayMCQs(filtered);
+});
 
-// Load default paper
-loadData("paper2");
+// Initial load
+loadMCQs(currentPaper);

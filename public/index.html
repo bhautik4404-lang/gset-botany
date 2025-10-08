@@ -2,24 +2,20 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GSET Botany — Live MCQs</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <h1>GSET Botany — Live MCQs</h1>
-
-  <label for="paperSelect">Select Paper:</label>
-  <select id="paperSelect">
+  
+  <select id="paper-select">
     <option value="paper1">Paper 1</option>
     <option value="paper2" selected>Paper 2</option>
   </select>
-
-  <input type="text" id="searchInput" placeholder="Search topics/subtopics..." />
-
-  <div id="status"></div>
-  <div id="topicContainer"></div>
-  <div id="subtopicContainer"></div>
-  <div id="mcqContainer"></div>
+  
+  <input type="text" id="search" placeholder="Search questions...">
+  <div id="mcq-container"></div>
 
   <script src="app.js"></script>
 </body>

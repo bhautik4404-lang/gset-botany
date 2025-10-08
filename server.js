@@ -1,37 +1,29 @@
 const express = require("express");
 const path = require("path");
-const fs = require("fs");
-
+const cors = require("cors");
 const app = express();
+
 const PORT = process.env.PORT || 10000;
 
-// Serve static files from 'public'
+app.use(cors());
+app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
-// API route for Paper 1
+// API for Paper 1
 app.get("/api/paper1", (req, res) => {
-  const filePath = path.join(__dirname, "data1.json");
-  fs.readFile(filePath, "utf8", (err, data) => {
-    if (err) return res.status(500).json({ error: "Failed to load Paper 1 data" });
-    res.json(JSON.parse(data));
-  });
+  res.sendFile(path.join(__dirname, "data1.json"));
 });
 
-// API route for Paper 2 (existing)
+// API for Paper 2
 app.get("/api/paper2", (req, res) => {
-  const filePath = path.join(__dirname, "data.json");
-  fs.readFile(filePath, "utf8", (err, data) => {
-    if (err) return res.status(500).json({ error: "Failed to load Paper 2 data" });
-    res.json(JSON.parse(data));
-  });
+  res.sendFile(path.join(__dirname, "data.json"));
 });
 
-// Catch-all route for SPA (fixed)
+// SPA wildcard route for React/Vanilla JS routing
 app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+  res.sendFile(path.join(__dirname, "public/index.html"));
 });
 
-// Start server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
