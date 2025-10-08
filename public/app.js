@@ -1,88 +1,91 @@
-const statusEl = document.getElementById('status');
-const appEl = document.getElementById('app');
+const contentDiv = document.getElementById("content");
 
-function setStatus(text) { statusEl.textContent = text; }
-
-async function loadAndRender() {
-  setStatus('Fetching data…');
-  try {
-    const res = await fetch('/api/data', { cache: 'no-store' });
-    if (!res.ok) throw new Error('Failed to fetch data.json');
-    const json = await res.json();
-    render(json);
-    setStatus('Data loaded — listening for updates');
-  } catch (err) {
-    setStatus('Error loading data: ' + err.message);
-    appEl.innerHTML = '<pre style="color:red;">Failed to load data.json. Put a valid file named data.json in the project root.</pre>';
-  }
+async function loadData() {
+  const res = await fetch("https://raw.githubusercontent.com/bhautik4404-lang/gset-botany/main/data.json?" + Date.now());
+  const data = await res.json();
+  allData = data;
+  showTopics(data);
 }
 
-function render(data) {
-  if (!data || !Array.isArray(data.topics)) {
-    appEl.innerHTML = '<p>No topics found in data (expected "topics" array).</p>';
-    return;
-  }
-  const parts = [];
-  data.topics.forEach(topic => {
-    parts.push(`<section class="topic"><h2>${escapeHtml(topic.name||topic.id||'Unnamed topic')}</h2>`);
-    if (Array.isArray(topic.subtopics)) {
-      topic.subtopics.forEach(sub => {
-        parts.push(`<div class="subtopic"><h3>${escapeHtml(sub.name||sub.id)}</h3>`);
-        if (Array.isArray(sub.mcqs)) {
-          sub.mcqs.forEach((mcq, idx) => {
-            parts.push(`<div class="mcq"><strong>Q${idx+1}.</strong> ${escapeHtml(mcq.q||'')}<ul>`);
-            if (Array.isArray(mcq.options)) {
-              mcq.options.forEach((opt, i) => {
-                parts.push(`<li>${escapeHtml(opt||'')} ${i===mcq.answer ? '<em style="color:green">✔</em>' : ''}</li>`);
-              });
-            }
-            parts.push(`</ul></div>`);
-          });
+// Show all topics
+function showTopics(data) {
+  contentDiv.innerHTML = "<h2>Select a Topic</h2>";
+  data.forEach(topic => {
+    const btn = document.createElement("button");
+    btn.textContent = topic.topic;
+    btn.onclick = () => showSubtopics(topic);
+    btn.style.display = "block";
+    btn.style.margin = "10px 0";
+    contentDiv.appendChild(btn);
+  });
+}
+
+// Show subtopics
+function showSubtopics(topic) {
+  contentDiv.innerHTML = `<h2>${topic.topic} → Select Subtopic</h2>`;
+  topic.subtopics.forEach(sub => {
+    const btn = document.createElement("button");
+    btn.textContent = sub.subtopic;
+    btn.onclick = () => showMCQs(sub);
+    btn.style.display = "block";
+    btn.style.margin = "10px 0";
+    contentDiv.appendChild(btn);
+  });
+
+  const backBtn = document.createElement("button");
+  backBtn.textContent = "← Back to Topics";
+  backBtn.onclick = () => showTopics(allData);
+  backBtn.style.marginTop = "20px";
+  contentDiv.appendChild(backBtn);
+}
+
+// Show MCQs with interactive answers
+function showMCQs(subtopic) {
+  contentDiv.innerHTML = `<h2>${subtopic.subtopic} → MCQs</h2>`;
+
+  subtopic.mcqs.forEach((q, i) => {
+    const div = document.createElement("div");
+    div.style.border = "1px solid #ccc";
+    div.style.padding = "10px";
+    div.style.marginBottom = "10px";
+
+    const questionHTML = document.createElement("div");
+    questionHTML.innerHTML = `<strong>Q${i + 1}: ${q.question}</strong>`;
+    div.appendChild(questionHTML);
+
+    q.options.forEach(opt => {
+      const optBtn = document.createElement("button");
+      optBtn.textContent = opt;
+      optBtn.style.margin = "5px";
+      optBtn.onclick = () => {
+        if (opt === q.answer) {
+          optBtn.style.backgroundColor = "#2ecc71"; // green for correct
+          optBtn.style.color = "white";
         } else {
-          parts.push('<div>No MCQs in this subtopic</div>');
+          optBtn.style.backgroundColor = "#e74c3c"; // red for wrong
+          optBtn.style.color = "white";
         }
-        parts.push('</div>');
-      });
-    }
-    parts.push('</section>');
+
+        // Disable all buttons after selection
+        Array.from(div.querySelectorAll("button")).forEach(b => b.disabled = true);
+      };
+      div.appendChild(optBtn);
+    });
+
+    contentDiv.appendChild(div);
   });
-  appEl.innerHTML = parts.join('');
+
+  const backBtn = document.createElement("button");
+  backBtn.textContent = "← Back to Subtopics";
+  backBtn.onclick = () => showSubtopics(findTopicForSub(subtopic));
+  backBtn.style.marginTop = "20px";
+  contentDiv.appendChild(backBtn);
 }
 
-function escapeHtml(s = '') {
-  return String(s)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+// Helper to find parent topic for a subtopic
+function findTopicForSub(sub) {
+  return allData.find(topic => topic.subtopics.includes(sub));
 }
 
-// WebSocket setup
-function connectWS() {
-  const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  const ws = new WebSocket(`${protocol}://${location.host}`);
-  ws.addEventListener('open', () => setStatus('Connected — waiting for data changes'));
-  ws.addEventListener('message', ev => {
-    try {
-      const msg = JSON.parse(ev.data);
-      if (msg.type === 'data_updated') {
-        setStatus('Change detected — reloading data');
-        loadAndRender();
-      }
-    } catch (e) {
-      console.log('ws msg', e);
-    }
-  });
-  ws.addEventListener('close', () => {
-    setStatus('Disconnected. Reconnecting in 2s...');
-    setTimeout(connectWS, 2000);
-  });
-  ws.addEventListener('error', () => {
-    setStatus('WebSocket error');
-    ws.close();
-  });
-}
-
-window.addEventListener('load', () => {
-  loadAndRender();
-  connectWS();
-});
+let allData = [];
+loadData().then(data => allData = data);
