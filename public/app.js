@@ -59,13 +59,12 @@ function showSubtopics(topic) {
   contentDiv.appendChild(backBtn);
 }
 
-// Show MCQs for a subtopic
+// Show MCQs for a subtopic with tag filtering
 function showMCQs(subtopic) {
   let score = 0;
   let answered = 0;
-  const total = subtopic.mcqs.length;
 
-  // Shuffle answers for all MCQs first
+  // Shuffle answers for all MCQs
   subtopic.mcqs.forEach(qObj => {
     const correctAnswerText = qObj.options[qObj.answer];
     qObj.options = shuffleArray([...qObj.options]);
@@ -78,65 +77,97 @@ function showMCQs(subtopic) {
   const scoreDisplay = document.createElement("div");
   scoreDisplay.style.margin = "15px 0";
   scoreDisplay.style.fontWeight = "bold";
-  scoreDisplay.textContent = `Score: 0 / ${total}`;
+  scoreDisplay.textContent = `Score: 0 / ${subtopic.mcqs.length}`;
   contentDiv.appendChild(scoreDisplay);
 
-  subtopic.mcqs.forEach((qObj, i) => {
-    const div = document.createElement("div");
-    div.className = "mcq-container";
-    div.style.border = "1px solid #ccc";
-    div.style.padding = "10px";
-    div.style.marginBottom = "10px";
+  // Tag buttons
+  const tagDiv = document.createElement("div");
+  tagDiv.style.marginBottom = "10px";
+  const allTags = Array.from(new Set(subtopic.mcqs.flatMap(q => q.tags || [])));
 
-    // QUESTION
-    const questionHTML = document.createElement("div");
-    questionHTML.innerHTML = `<strong>Q${i + 1}: ${qObj.q}</strong>`;
-    div.appendChild(questionHTML);
+  const allBtn = document.createElement("button");
+  allBtn.textContent = "All";
+  allBtn.style.margin = "0 5px 5px 0";
+  allBtn.onclick = () => displayMCQs(subtopic.mcqs);
+  tagDiv.appendChild(allBtn);
 
-    // OPTIONS
-    qObj.options.forEach((opt, index) => {
-      const btn = document.createElement("button");
-      btn.textContent = opt;
-      btn.style.margin = "5px";
-
-      btn.onclick = () => {
-        // Mark correct/incorrect
-        if (index === qObj.answer) {
-          btn.style.backgroundColor = "#2ecc71"; // green
-          btn.style.color = "white";
-          score++;
-        } else {
-          btn.style.backgroundColor = "#e74c3c"; // red
-          btn.style.color = "white";
-        }
-
-        // Disable all options
-        Array.from(div.querySelectorAll("button")).forEach(b => b.disabled = true);
-
-        // Show explanation
-        const explanationDiv = document.createElement("div");
-        explanationDiv.style.marginTop = "5px";
-        explanationDiv.style.fontStyle = "italic";
-        explanationDiv.style.color = "#34495e";
-        explanationDiv.textContent = "Explanation: " + qObj.explanation;
-        div.appendChild(explanationDiv);
-
-        answered++;
-        scoreDisplay.textContent = `Score: ${score} / ${total}`;
-
-        // Show final summary when done
-        if (answered === total) {
-          showFinalSummary(subtopic.name, score, total);
-        }
-      };
-
-      div.appendChild(btn);
-    });
-
-    contentDiv.appendChild(div);
+  allTags.forEach(tag => {
+    const btn = document.createElement("button");
+    btn.textContent = tag;
+    btn.style.margin = "0 5px 5px 0";
+    btn.onclick = () => {
+      const filteredMCQs = subtopic.mcqs.filter(q => q.tags.includes(tag));
+      displayMCQs(filteredMCQs);
+    };
+    tagDiv.appendChild(btn);
   });
 
-  // Back button to subtopics
+  contentDiv.appendChild(tagDiv);
+
+  // Initial display: all MCQs
+  displayMCQs(subtopic.mcqs);
+
+  function displayMCQs(mcqsToShow) {
+    // Remove existing MCQs
+    const existingMCQs = contentDiv.querySelectorAll(".mcq-container");
+    existingMCQs.forEach(e => e.remove());
+
+    mcqsToShow.forEach((qObj, i) => {
+      const div = document.createElement("div");
+      div.className = "mcq-container";
+      div.style.border = "1px solid #ccc";
+      div.style.padding = "10px";
+      div.style.marginBottom = "10px";
+
+      // QUESTION
+      const questionHTML = document.createElement("div");
+      questionHTML.innerHTML = `<strong>Q${i + 1}: ${qObj.q}</strong>`;
+      div.appendChild(questionHTML);
+
+      // OPTIONS
+      qObj.options.forEach((opt, index) => {
+        const btn = document.createElement("button");
+        btn.textContent = opt;
+        btn.style.margin = "5px";
+
+        btn.onclick = () => {
+          if (index === qObj.answer) {
+            btn.style.backgroundColor = "#2ecc71"; // green
+            btn.style.color = "white";
+            score++;
+          } else {
+            btn.style.backgroundColor = "#e74c3c"; // red
+            btn.style.color = "white";
+          }
+
+          // Disable all options
+          Array.from(div.querySelectorAll("button")).forEach(b => b.disabled = true);
+
+          // Show explanation
+          const explanationDiv = document.createElement("div");
+          explanationDiv.style.marginTop = "5px";
+          explanationDiv.style.fontStyle = "italic";
+          explanationDiv.style.color = "#34495e";
+          explanationDiv.textContent = "Explanation: " + qObj.explanation;
+          div.appendChild(explanationDiv);
+
+          answered++;
+          scoreDisplay.textContent = `Score: ${score} / ${subtopic.mcqs.length}`;
+
+          // Show final summary when done
+          if (answered === subtopic.mcqs.length) {
+            showFinalSummary(subtopic.name, score, subtopic.mcqs.length);
+          }
+        };
+
+        div.appendChild(btn);
+      });
+
+      contentDiv.appendChild(div);
+    });
+  }
+
+  // Back button
   const backBtn = document.createElement("button");
   backBtn.textContent = "← Back to Subtopics";
   backBtn.style.marginTop = "20px";
