@@ -1,6 +1,15 @@
 const contentDiv = document.getElementById("content");
 let allData = []; // Array of topics
 
+// Utility function to shuffle an array
+function shuffleArray(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
 // Fetch JSON from GitHub and initialize app
 async function loadData() {
   try {
@@ -56,8 +65,16 @@ function showMCQs(subtopic) {
   let answered = 0;
   const total = subtopic.mcqs.length;
 
+  // **Shuffle answers for all MCQs first**
+  subtopic.mcqs.forEach(qObj => {
+    const correctAnswerText = qObj.options[qObj.answer];
+    qObj.options = shuffleArray([...qObj.options]);
+    qObj.answer = qObj.options.indexOf(correctAnswerText);
+  });
+
   contentDiv.innerHTML = `<h2>${subtopic.name} → MCQs</h2>`;
 
+  // Score display
   const scoreDisplay = document.createElement("div");
   scoreDisplay.style.margin = "15px 0";
   scoreDisplay.style.fontWeight = "bold";
@@ -96,7 +113,7 @@ function showMCQs(subtopic) {
         answered++;
         scoreDisplay.textContent = `Score: ${score} / ${total}`;
 
-        // If all questions answered, show final summary
+        // Show final summary when done
         if (answered === total) {
           showFinalSummary(subtopic.name, score, total);
         }
@@ -134,8 +151,7 @@ function showFinalSummary(subtopicName, score, total) {
   contentDiv.appendChild(backBtn);
 }
 
-
-// Helper: find parent topic for subtopic
+// Helper: find parent topic of subtopic
 function findTopicForSub(sub) {
   return allData.find(topic => topic.subtopics.includes(sub));
 }
