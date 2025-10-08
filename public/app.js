@@ -59,7 +59,7 @@ function showSubtopics(topic) {
   contentDiv.appendChild(backBtn);
 }
 
-// Show MCQs for a subtopic with tag filtering
+// Show MCQs for a subtopic with tag filtering and search
 function showMCQs(subtopic) {
   let score = 0;
   let answered = 0;
@@ -79,6 +79,15 @@ function showMCQs(subtopic) {
   scoreDisplay.style.fontWeight = "bold";
   scoreDisplay.textContent = `Score: 0 / ${subtopic.mcqs.length}`;
   contentDiv.appendChild(scoreDisplay);
+
+  // SEARCH BAR
+  const searchInput = document.createElement("input");
+  searchInput.type = "text";
+  searchInput.placeholder = "Search questions...";
+  searchInput.style.marginBottom = "10px";
+  searchInput.style.width = "100%";
+  searchInput.style.padding = "5px";
+  contentDiv.appendChild(searchInput);
 
   // Tag buttons
   const tagDiv = document.createElement("div");
@@ -106,6 +115,13 @@ function showMCQs(subtopic) {
 
   // Initial display: all MCQs
   displayMCQs(subtopic.mcqs);
+
+  // Listen to search input
+  searchInput.addEventListener("input", () => {
+    const keyword = searchInput.value.toLowerCase();
+    const filtered = subtopic.mcqs.filter(q => q.q.toLowerCase().includes(keyword));
+    displayMCQs(filtered);
+  });
 
   function displayMCQs(mcqsToShow) {
     // Remove existing MCQs
@@ -140,7 +156,6 @@ function showMCQs(subtopic) {
             btn.style.color = "white";
           }
 
-          // Disable all options
           Array.from(div.querySelectorAll("button")).forEach(b => b.disabled = true);
 
           // Show explanation
@@ -154,7 +169,6 @@ function showMCQs(subtopic) {
           answered++;
           scoreDisplay.textContent = `Score: ${score} / ${subtopic.mcqs.length}`;
 
-          // Show final summary when done
           if (answered === subtopic.mcqs.length) {
             showFinalSummary(subtopic.name, score, subtopic.mcqs.length);
           }
