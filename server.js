@@ -2,39 +2,28 @@ const express = require("express");
 const path = require("path");
 const app = express();
 
-// Render provides port via process.env.PORT
-const PORT = process.env.PORT || 3000;
+// Render requires using process.env.PORT
+const PORT = process.env.PORT || 10000;
 
-// --------------------
-// Serve static files
-// --------------------
+// Serve static files from 'public' folder
 app.use(express.static(path.join(__dirname, "public")));
 
-// --------------------
-// API endpoints for JSON data
-// --------------------
-
-// Paper 2 (existing app)
-app.get("/api/data", (req, res) => {
-  res.sendFile(path.join(__dirname, "data.json"));
-});
-
-// Paper 1 (new data)
-app.get("/api/data1", (req, res) => {
+// API endpoint for Paper 1
+app.get("/api/paper1", (req, res) => {
   res.sendFile(path.join(__dirname, "data1.json"));
 });
 
-// --------------------
-// Catch-all route for SPA (index.html)
-// --------------------
-// Correct wildcard syntax for Express 4+ and path-to-regexp
-app.get("/*", (req, res) => {
-  res.sendFile(path.join(__dirname, "public/index.html"));
+// API endpoint for Paper 2
+app.get("/api/paper2", (req, res) => {
+  res.sendFile(path.join(__dirname, "data.json"));
 });
 
-// --------------------
-// Start the server
-// --------------------
+// Catch-all route to serve index.html for any other path
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+// Start server
 app.listen(PORT, () => {
-  console.log(`Server listening on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
