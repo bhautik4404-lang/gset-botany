@@ -1,19 +1,21 @@
-// Elements
 const paperSelect = document.getElementById("paperSelect");
+const searchInput = document.getElementById("searchInput");
 const topicContainer = document.getElementById("topicContainer");
 const subtopicContainer = document.getElementById("subtopicContainer");
 const mcqContainer = document.getElementById("mcqContainer");
 const status = document.getElementById("status");
 
 let currentData = null;
+let filteredTopics = [];
 
-// Fetch data for selected paper
+// Load JSON data for selected paper
 async function loadData(paper) {
   try {
     status.innerText = "Loading questions…";
     const res = await fetch(`/api/${paper}`);
     if (!res.ok) throw new Error("Failed to fetch data");
     currentData = await res.json();
+    filteredTopics = currentData.topics;
     showTopics();
     status.innerText = "";
   } catch (e) {
@@ -21,15 +23,13 @@ async function loadData(paper) {
   }
 }
 
-// Show list of topics
+// Show topics
 function showTopics() {
   topicContainer.innerHTML = "";
   subtopicContainer.innerHTML = "";
   mcqContainer.innerHTML = "";
 
-  if (!currentData || !currentData.topics) return;
-
-  currentData.topics.forEach((topic) => {
+  filteredTopics.forEach(topic => {
     const btn = document.createElement("button");
     btn.innerText = topic.name;
     btn.onclick = () => showSubtopics(topic);
@@ -37,12 +37,12 @@ function showTopics() {
   });
 }
 
-// Show subtopics of a topic
+// Show subtopics
 function showSubtopics(topic) {
   subtopicContainer.innerHTML = "";
   mcqContainer.innerHTML = "";
 
-  topic.subtopics.forEach((sub) => {
+  topic.subtopics.forEach(sub => {
     const btn = document.createElement("button");
     btn.innerText = sub.name;
     btn.onclick = () => showMCQs(sub);
@@ -50,16 +50,16 @@ function showSubtopics(topic) {
   });
 }
 
-// Show MCQs of a subtopic
+// Show MCQs
 function showMCQs(subtopic) {
   mcqContainer.innerHTML = "";
 
-  subtopic.mcqs.forEach((mcq, index) => {
+  subtopic.mcqs.forEach((mcq, idx) => {
     const qDiv = document.createElement("div");
     qDiv.className = "mcq";
 
     const question = document.createElement("p");
-    question.innerText = `${index + 1}. ${mcq.q}`;
+    question.innerText = `${idx + 1}. ${mcq.q}`;
     qDiv.appendChild(question);
 
     mcq.options.forEach((opt, i) => {
@@ -79,11 +79,18 @@ function showMCQs(subtopic) {
   });
 }
 
-// Paper selection handler
-paperSelect.addEventListener("change", (e) => {
-  const paper = e.target.value;
-  if (paper) loadData(paper);
+// Search topics/subtopics
+searchInput.addEventListener("input", () => {
+  const term = searchInput.value.toLowerCase();
+  filteredTopics = currentData.topics.filter(topic =>
+    topic.name.toLowerCase().includes(term) ||
+    topic.subtopics.some(sub => sub.name.toLowerCase().includes(term))
+  );
+  showTopics();
 });
 
-// Initial load: optional, load Paper 1 by default
-loadData("paper1");
+// Paper selection
+paperSelect.addEventListener("change", e => loadData(e.target.value));
+
+// Load default paper
+loadData("paper2");
