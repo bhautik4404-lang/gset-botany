@@ -6,7 +6,8 @@ async function loadData() {
       "https://raw.githubusercontent.com/bhautik4404-lang/gset-botany/main/data.json?" + Date.now()
     );
     if (!res.ok) throw new Error("Failed to fetch data.json");
-    allData = await res.json();
+    const data = await res.json();
+    allData = data.topics; // <-- change here
     showTopics(allData);
   } catch (err) {
     contentDiv.innerHTML = `<p style="color:red;">Error loading questions: ${err.message}</p>`;
