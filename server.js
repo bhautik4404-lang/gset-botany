@@ -1,50 +1,27 @@
 // server.js
-const express = require('express');
-const path = require('path');
-const fs = require('fs');
-const http = require('http');
-const WebSocket = require('ws');
-
-const DATA_PATH = path.join(__dirname, 'data.json'); // <- put your JSON here (rename your uploaded file to data.json)
-
+const express = require("express");
+const path = require("path");
 const app = express();
-app.use(express.static(path.join(__dirname, 'public')));
 
-// Serve JSON to clients
-app.get('/api/data', (req, res) => {
-  res.sendFile(DATA_PATH);
+// ✅ Serve static files from the 'public' directory
+app.use(express.static(path.join(__dirname, "public")));
+
+// ✅ Serve both JSON data files (Paper 1 & Paper 2)
+app.get("/data.json", (req, res) => {
+  res.sendFile(path.join(__dirname, "data.json"));
 });
 
-const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
-
-function broadcastJSONUpdate() {
-  const message = JSON.stringify({ type: 'data_updated', when: Date.now() });
-  wss.clients.forEach(client => {
-    if (client.readyState === WebSocket.OPEN) client.send(message);
-  });
-  console.log('[ws] broadcast: data_updated');
-}
-
-wss.on('connection', (ws) => {
-  console.log('[ws] client connected');
-  ws.send(JSON.stringify({ type: 'hello' }));
-  ws.on('close', () => console.log('[ws] client disconnected'));
+app.get("/data1.json", (req, res) => {
+  res.sendFile(path.join(__dirname, "data1.json"));
 });
 
-// Watch the data file for changes and notify clients
-// NOTE: fs.watch works in most environments; if you have trouble on Windows use 'chokidar' (I include a note later).
-fs.watch(DATA_PATH, { persistent: true }, (eventType, filename) => {
-  if (!filename) return;
-  if (eventType === 'change' || eventType === 'rename') {
-    console.log('[watcher] detected change:', eventType, filename);
-    // debounce to prevent duplicate notifications
-    if (server._notifyTimeout) clearTimeout(server._notifyTimeout);
-    server._notifyTimeout = setTimeout(() => {
-      broadcastJSONUpdate();
-    }, 150);
-  }
+// ✅ Default route → serve index.html
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
+// ✅ Start the server
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Server listening on http://localhost:${PORT}`));
+app.listen(PORT, () => {
+  console.log(`✅ Server running on http://localhost:${PORT}`);
+});
